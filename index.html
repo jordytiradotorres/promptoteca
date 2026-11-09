@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#f7f8fc" />
+    <title>Promptoteca — Tu biblioteca de prompts</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script src="app.js" defer></script>
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="brand" href="#" aria-label="Promptoteca, inicio">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none">
+            <path
+              d="M5 4.75A1.75 1.75 0 0 1 6.75 3H20v15H6.75A1.75 1.75 0 0 0 5 19.75V4.75Z"
+              stroke="currentColor"
+              stroke-width="1.7"
+              stroke-linejoin="round"
+            />
+            <path
+              d="M5 19.75A1.75 1.75 0 0 1 6.75 18H20M9 7h7M9 10.5h7"
+              stroke="currentColor"
+              stroke-width="1.7"
+              stroke-linecap="round"
+            />
+          </svg>
+        </span>
+        <span>promptoteca</span>
+      </a>
+      <span class="topbar-note">Tu espacio para buenas ideas</span>
+    </header>
+
+    <main class="page-shell">
+      <section class="intro" aria-labelledby="page-title">
+        <div class="eyebrow">
+          <span class="eyebrow-dot"></span> TU BIBLIOTECA PERSONAL
+        </div>
+        <h1 id="page-title">
+          Tus mejores prompts,<br /><span>siempre a mano.</span>
+        </h1>
+        <p>
+          Guarda las instrucciones que funcionan. Encuéntralas cuando las
+          necesites.
+        </p>
+      </section>
+
+      <div class="workspace">
+        <section class="form-panel" aria-labelledby="form-title">
+          <div class="section-heading">
+            <div class="heading-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none">
+                <path
+                  d="M12 5v14M5 12h14"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                  stroke-linecap="round"
+                />
+              </svg>
+            </div>
+            <div>
+              <h2 id="form-title">Crear un prompt</h2>
+              <p>Captura una idea para volver a usarla.</p>
+            </div>
+          </div>
+
+          <form id="prompt-form">
+            <label for="prompt-title">Título</label>
+            <input
+              id="prompt-title"
+              name="title"
+              type="text"
+              maxlength="80"
+              placeholder="Ej. Ideas para redes sociales"
+              required
+            />
+
+            <div class="label-row">
+              <label for="prompt-model">Modelo utilizado</label>
+            </div>
+            <input
+              id="prompt-model"
+              name="model"
+              type="text"
+              maxlength="100"
+              placeholder="Ej. GPT-4.1"
+              required
+            />
+            <label class="code-option" for="prompt-is-code">
+              <input id="prompt-is-code" name="isCode" type="checkbox" />
+              El contenido del prompt es código
+            </label>
+
+            <div class="label-row">
+              <label for="prompt-content">Contenido del prompt</label>
+              <span class="optional-label">Escribe o pega tu prompt</span>
+            </div>
+            <textarea
+              id="prompt-content"
+              name="content"
+              rows="7"
+              placeholder="Actúa como un experto en..."
+              required
+            ></textarea>
+
+            <button class="save-button" type="submit">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path
+                  d="M5 4.75A1.75 1.75 0 0 1 6.75 3H18l3 3v14a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5a.25.25 0 0 1 1-.25Z"
+                  stroke="currentColor"
+                  stroke-width="1.7"
+                  stroke-linejoin="round"
+                />
+                <path
+                  d="M8 3v5h8V3M8 21v-8h8v8"
+                  stroke="currentColor"
+                  stroke-width="1.7"
+                  stroke-linejoin="round"
+                />
+              </svg>
+              Guardar prompt
+            </button>
+            <p
+              id="form-message"
+              class="form-message"
+              role="status"
+              aria-live="polite"
+            ></p>
+          </form>
+          <div class="privacy-note">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <rect
+                x="5"
+                y="10"
+                width="14"
+                height="11"
+                rx="2"
+                stroke="currentColor"
+                stroke-width="1.6"
+              />
+              <path
+                d="M8 10V7a4 4 0 0 1 8 0v3M12 14v3"
+                stroke="currentColor"
+                stroke-width="1.6"
+                stroke-linecap="round"
+              />
+            </svg>
+            Tus prompts se guardan solo en este dispositivo.
+          </div>
+        </section>
+
+        <section class="library-panel" aria-labelledby="library-title">
+          <div class="library-heading">
+            <div>
+              <div class="title-with-count">
+                <h2 id="library-title">Tu biblioteca</h2>
+                <span id="prompt-count" class="count-badge">0</span>
+              </div>
+              <p id="library-subtitle">
+                Tus prompts guardados aparecerán aquí.
+              </p>
+            </div>
+          </div>
+          <div class="data-tools" aria-label="Importar o exportar biblioteca">
+            <button id="export-button" class="data-button" type="button">
+              Exportar JSON
+            </button>
+            <div class="import-controls">
+              <button id="import-button" class="data-button" type="button">
+                Elegir archivo
+              </button>
+              <input
+                id="import-file"
+                class="visually-hidden"
+                type="file"
+                accept=".json,application/json"
+                aria-label="Archivo JSON para importar"
+              />
+              <div class="import-option">
+                <label for="import-mode">Al importar</label>
+                <select id="import-mode">
+                  <option value="merge">Fusionar con la biblioteca</option>
+                  <option value="replace">Reemplazar la biblioteca</option>
+                </select>
+              </div>
+              <div class="import-option">
+                <label for="conflict-mode">Si un ID ya existe</label>
+                <select id="conflict-mode">
+                  <option value="keep">Mantener el prompt actual</option>
+                  <option value="overwrite">Usar el prompt importado</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          <p
+            id="data-message"
+            class="data-message"
+            role="status"
+            aria-live="polite"
+          ></p>
+          <p id="rating-help" class="visually-hidden">
+            Usa las flechas para cambiar la calificación y pulsa una estrella
+            para guardarla.
+          </p>
+          <div id="prompt-list" class="prompt-list" aria-live="polite"></div>
+        </section>
+      </div>
+      <footer>Hecho para que tus ideas no se pierdan.</footer>
+    </main>
+  </body>
+</html>
