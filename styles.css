@@ -22,6 +22,44 @@
   box-sizing: border-box;
 }
 
+.toast-region {
+  position: fixed;
+  z-index: 1000;
+  top: 16px;
+  right: 16px;
+  display: grid;
+  width: min(390px, calc(100vw - 32px));
+  gap: 8px;
+  pointer-events: none;
+}
+
+.toast-message {
+  margin: 0;
+  padding: 13px 16px;
+  border: 1px solid;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 8px 26px rgba(36, 37, 58, 0.16);
+  font-size: 13px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.toast-message.is-success {
+  border-color: #b8dfc5;
+  color: #176b37;
+}
+
+.toast-message.is-error {
+  border-color: #efc1c5;
+  color: #a52e3b;
+}
+
+.toast-message.is-neutral {
+  border-color: #d9dae3;
+  color: #626477;
+}
+
 body {
   min-width: 320px;
   min-height: 100vh;
@@ -317,8 +355,17 @@ textarea:focus {
 .form-message {
   min-height: 0;
   margin-top: 0;
-  color: #b43e4a;
   font-size: 12px;
+}
+
+.form-message.is-error,
+.note-status.is-error {
+  color: #b43e4a;
+}
+
+.form-message.is-success,
+.note-status.is-success {
+  color: #257443;
 }
 
 .form-message:not(:empty) {
@@ -431,6 +478,10 @@ textarea:focus {
 
 .data-message.is-error {
   color: #b43e4a;
+}
+
+.data-message.is-neutral {
+  color: #77798d;
 }
 
 .title-with-count {

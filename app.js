@@ -17,6 +17,7 @@ const importFileInput = document.querySelector("#import-file");
 const importMode = document.querySelector("#import-mode");
 const conflictMode = document.querySelector("#conflict-mode");
 const dataMessage = document.querySelector("#data-message");
+const toastRegion = document.querySelector("#toast-region");
 
 let prompts = loadPrompts();
 
@@ -62,8 +63,7 @@ function estimateTokens(text, isCode = false) {
   const min = Number((0.75 * wordCount * multiplier).toFixed(2));
   const max = Number((0.25 * text.length * multiplier).toFixed(2));
   // Use the upper bound for confidence so large prompts are classified conservatively.
-  const confidence =
-    max < 1000 ? "high" : max <= 5000 ? "medium" : "low";
+  const confidence = max < 1000 ? "high" : max <= 5000 ? "medium" : "low";
 
   return { min, max, confidence };
 }
@@ -95,10 +95,14 @@ function trackModel(modelName, content, isCode = false) {
     throw new TypeError("El nombre del modelo no puede estar vacío.");
   }
   if (modelName.length > 100) {
-    throw new RangeError("El nombre del modelo no puede superar 100 caracteres.");
+    throw new RangeError(
+      "El nombre del modelo no puede superar 100 caracteres.",
+    );
   }
   if (typeof content !== "string") {
-    throw new TypeError("El contenido del prompt debe ser una cadena de texto.");
+    throw new TypeError(
+      "El contenido del prompt debe ser una cadena de texto.",
+    );
   }
 
   const createdAt = new Date().toISOString();
@@ -108,6 +112,27 @@ function trackModel(modelName, content, isCode = false) {
     updatedAt: createdAt,
     tokenEstimate: estimateTokens(content, isCode),
   });
+}
+
+function showToast(message, state) {
+  if (!message) return;
+
+  const toast = document.createElement("p");
+  toast.className = `toast-message is-${state}`;
+  toast.setAttribute("role", state === "error" ? "alert" : "status");
+  toast.textContent = message;
+  toastRegion.append(toast);
+
+  window.setTimeout(() => {
+    toast.remove();
+  }, 5000);
+}
+
+function setFormMessage(message, state = "error") {
+  formMessage.textContent = message;
+  formMessage.classList.toggle("is-error", state === "error");
+  formMessage.classList.toggle("is-success", state === "success");
+  showToast(message, state);
 }
 
 function loadPrompts() {
@@ -148,8 +173,9 @@ function loadPrompts() {
         };
       });
   } catch (error) {
-    formMessage.textContent =
-      "No se pudieron cargar los prompts guardados. Revisa el almacenamiento del navegador.";
+    setFormMessage(
+      "No se pudieron cargar los prompts guardados. Revisa el almacenamiento del navegador.",
+    );
     console.error("Error al cargar los prompts:", error);
     return [];
   }
@@ -159,12 +185,13 @@ function savePrompts(nextPrompts, shouldRender = true) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(nextPrompts));
     prompts = nextPrompts;
-    formMessage.textContent = "";
+    setFormMessage("", "");
     if (shouldRender) renderPrompts();
     return true;
   } catch (error) {
-    formMessage.textContent =
-      "No se pudo guardar el cambio. Comprueba el espacio disponible en el navegador.";
+    setFormMessage(
+      "No se pudo guardar el cambio. Comprueba el espacio disponible en el navegador.",
+    );
     console.error("Error al guardar los prompts:", error);
     return false;
   }
@@ -181,8 +208,7 @@ function isValidPrompt(prompt) {
     prompt.title.trim().length > 0 &&
     typeof prompt.content === "string" &&
     prompt.content.trim().length > 0 &&
-    (prompt.createdAt === undefined ||
-      isValidIsoTimestamp(prompt.createdAt)) &&
+    (prompt.createdAt === undefined || isValidIsoTimestamp(prompt.createdAt)) &&
     (prompt.metadata === undefined || isValidMetadata(prompt.metadata)) &&
     (prompt.rating === undefined ||
       (Number.isInteger(prompt.rating) &&
@@ -202,8 +228,8 @@ function isValidPrompt(prompt) {
 }
 
 function calculateStats(promptCollection) {
-  const ratedPrompts = promptCollection.filter(
-    (prompt) => Number.isInteger(prompt.rating),
+  const ratedPrompts = promptCollection.filter((prompt) =>
+    Number.isInteger(prompt.rating),
   );
   const averageRating = ratedPrompts.length
     ? Number(
@@ -301,10 +327,21 @@ function validateExportFile(exportData) {
   return importedPrompts;
 }
 
-function setDataMessage(message, isError = false) {
+function setDataMessage(message, state = "success") {
   dataMessage.textContent = message;
-  dataMessage.classList.toggle("is-error", isError);
-  dataMessage.classList.toggle("is-success", !isError && Boolean(message));
+  dataMessage.classList.toggle(
+    "is-error",
+    state === "error" && Boolean(message),
+  );
+  dataMessage.classList.toggle(
+    "is-success",
+    state === "success" && Boolean(message),
+  );
+  dataMessage.classList.toggle(
+    "is-neutral",
+    state === "neutral" && Boolean(message),
+  );
+  showToast(message, state);
 }
 
 function exportPrompts() {
@@ -339,7 +376,10 @@ function exportPrompts() {
       }.`,
     );
   } catch (error) {
-    setDataMessage(`No se pudo exportar la biblioteca: ${error.message}`, true);
+    setDataMessage(
+      `No se pudo exportar la biblioteca: ${error.message}`,
+      "error",
+    );
     console.error("Error al exportar los prompts:", error);
   }
 }
@@ -381,7 +421,7 @@ function saveImportedPrompts(nextPrompts) {
   }
 
   prompts = nextPrompts;
-  formMessage.textContent = "";
+  setFormMessage("", "");
   renderPrompts();
 }
 
@@ -409,7 +449,7 @@ async function importPromptFile(file) {
           "Se guardará una copia de seguridad antes de continuar. ¿Deseas seguir?",
       )
     ) {
-      setDataMessage("Importación cancelada.");
+      setDataMessage("Importación cancelada.", "neutral");
       return;
     }
     nextPrompts = importedPrompts;
@@ -425,7 +465,7 @@ async function importPromptFile(file) {
             "Se guardará una copia de seguridad antes de continuar. ¿Deseas seguir?",
         )
       ) {
-        setDataMessage("Importación cancelada.");
+        setDataMessage("Importación cancelada.", "neutral");
         return;
       }
     }
@@ -449,6 +489,7 @@ async function importPromptFile(file) {
       conflicts.length
         ? `No hubo cambios: se conservaron los ${conflicts.length} prompts en conflicto.`
         : "El archivo no contiene prompts nuevos; no hubo cambios.",
+      "neutral",
     );
     return;
   }
@@ -474,7 +515,9 @@ async function importPromptFile(file) {
         ]
           .filter(Boolean)
           .join(" ");
-  setDataMessage(`Importación completada. ${result} Copia de seguridad creada.`);
+  setDataMessage(
+    `Importación completada. ${result} Copia de seguridad creada.`,
+  );
 }
 
 function updateRatingControl(card, prompt, rating) {
@@ -494,13 +537,13 @@ function updateRatingControl(card, prompt, rating) {
 
 function ratePrompt(promptId, rating, card) {
   if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
-    formMessage.textContent = "La calificación debe ser de 1 a 5 estrellas.";
+    setFormMessage("La calificación debe ser de 1 a 5 estrellas.");
     return false;
   }
 
   const prompt = prompts.find((item) => item.id === promptId);
   if (!prompt) {
-    formMessage.textContent = "No se encontró el prompt que quieres calificar.";
+    setFormMessage("No se encontró el prompt que quieres calificar.");
     return false;
   }
 
@@ -522,6 +565,13 @@ function createId() {
   );
 }
 
+function setNoteMessage(status, message, state = "success") {
+  status.textContent = message;
+  status.classList.toggle("is-error", state === "error");
+  status.classList.toggle("is-success", state === "success");
+  showToast(message, state);
+}
+
 function savePromptNotes(promptId, notes, message) {
   const updatedPrompts = prompts.map((prompt) =>
     prompt.id === promptId ? { ...prompt, notes } : prompt,
@@ -530,14 +580,20 @@ function savePromptNotes(promptId, notes, message) {
     const card = [...promptList.querySelectorAll(".prompt-card")].find(
       (item) => item.dataset.promptId === promptId,
     );
-    if (card) card.querySelector(".note-status").textContent = formMessage.textContent;
+    if (card) {
+      setNoteMessage(
+        card.querySelector(".note-status"),
+        formMessage.textContent,
+        "error",
+      );
+    }
     return false;
   }
 
   const card = [...promptList.querySelectorAll(".prompt-card")].find(
     (item) => item.dataset.promptId === promptId,
   );
-  if (card) card.querySelector(".note-status").textContent = message;
+  if (card) setNoteMessage(card.querySelector(".note-status"), message);
   return true;
 }
 
@@ -775,8 +831,11 @@ function renderPrompts() {
         saveButton.addEventListener("click", () => {
           const updatedContent = editor.value.trim();
           if (!updatedContent) {
-            card.querySelector(".note-status").textContent =
-              "La nota no puede estar vacía.";
+            setNoteMessage(
+              card.querySelector(".note-status"),
+              "La nota no puede estar vacía.",
+              "error",
+            );
             editor.focus();
             return;
           }
@@ -793,10 +852,7 @@ function renderPrompts() {
         cancelButton.textContent = "Cancelar";
         cancelButton.addEventListener("click", () => renderPrompts());
 
-        noteItem.replaceChildren(
-          editor,
-          document.createElement("div"),
-        );
+        noteItem.replaceChildren(editor, document.createElement("div"));
         noteItem.lastElementChild.className = "note-actions";
         noteItem.lastElementChild.append(saveButton, cancelButton);
         editor.focus();
@@ -842,8 +898,11 @@ function renderPrompts() {
       event.preventDefault();
       const noteContent = noteInput.value.trim();
       if (!noteContent) {
-        card.querySelector(".note-status").textContent =
-          "Escribe una nota antes de guardarla.";
+        setNoteMessage(
+          card.querySelector(".note-status"),
+          "Escribe una nota antes de guardarla.",
+          "error",
+        );
         noteInput.focus();
         return;
       }
@@ -873,8 +932,7 @@ form.addEventListener("submit", (event) => {
   const modelName = modelInput.value.trim();
 
   if (!title || !content || !modelName) {
-    formMessage.textContent =
-      "Escribe el título, el contenido y el nombre del modelo.";
+    setFormMessage("Escribe el título, el contenido y el nombre del modelo.");
     return;
   }
 
@@ -889,7 +947,7 @@ form.addEventListener("submit", (event) => {
       notes: [],
     };
   } catch (error) {
-    formMessage.textContent = error.message;
+    setFormMessage(error.message);
     console.error("Error al crear los metadatos del prompt:", error);
     return;
   }
@@ -897,6 +955,7 @@ form.addEventListener("submit", (event) => {
   if (savePrompts([...prompts, prompt])) {
     form.reset();
     titleInput.focus();
+    setFormMessage("Prompt creado correctamente.", "success");
   }
 });
 
@@ -910,7 +969,7 @@ importFileInput.addEventListener("change", async () => {
   try {
     await importPromptFile(file);
   } catch (error) {
-    setDataMessage(`No se pudo importar el archivo: ${error.message}`, true);
+    setDataMessage(`No se pudo importar el archivo: ${error.message}`, "error");
     console.error("Error al importar los prompts:", error);
   } finally {
     importFileInput.value = "";
